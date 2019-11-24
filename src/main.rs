@@ -1,4 +1,6 @@
 use structopt::StructOpt;
+use failure::ResultExt;
+use exitfailure::ExitFailure;
 
 #[derive(StructOpt)]
 struct Cli {
@@ -7,13 +9,10 @@ struct Cli {
     path: std::path::PathBuf,
 }
 
-#[derive(Debug)]
-struct CustomError(String);
-
-fn main() -> Result<(), CustomError> {
+fn main() -> Result<(), ExitFailure> {
     let args = Cli::from_args();
     let content = std::fs::read_to_string(&args.path)
-        .map_err(|err| CustomError(format!("Error reading `{:?}`: {}", &args.path.to_str(), err)))?;
+        .with_context(|_| format!("could not read file `{:?}`", &args.path))?;
     for line in content.lines() {
         if line.contains(&args.pattern) {
             println!("{}", line);
